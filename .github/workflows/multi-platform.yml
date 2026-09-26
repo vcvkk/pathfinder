@@ -40,7 +40,8 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           bindings: geode-sdk/bindings
-          bindings-ref: main
+          # bindings matching the Geode version in mod.json (5.3.0); main targets newer SDKs
+          bindings-ref: f8eabd0fe7223f2059cd52a8732a23df79e573b9
           combine: true
           target: ${{ matrix.config.target }}
 
