@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS" OR IOS)
+    set(CMAKE_OSX_ARCHITECTURES "arm64")
+else()
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
+endif()
 set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
@@ -25,7 +29,14 @@ add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 add_subdirectory(gd-sim)
 
 CPMAddPackage("gh:camila314/UIBuilder#main")
-CPMAddPackage("gh:maxnut/GDReplayFormat#gdr2")
+# Keep the library's test executable out of the default build: its POST_BUILD step
+# runs it, which is impossible when cross-compiling (e.g. for iOS).
+CPMAddPackage(
+    NAME GDReplayFormat
+    GITHUB_REPOSITORY maxnut/GDReplayFormat
+    GIT_TAG gdr2
+    EXCLUDE_FROM_ALL YES
+)
 
 # add custom target to strip binary
 if (APPLE)

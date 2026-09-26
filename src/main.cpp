@@ -6,6 +6,7 @@
 #include <UIBuilder.hpp>
 #include "pathfinder.hpp"
 #include <future>
+#include <algorithm>
 
 using namespace geode::prelude;
 using namespace geode::utils::file;
@@ -45,8 +46,33 @@ public:
                 create_directories(saveDir);
             }
 
+            auto fileName = fmt::format("{}.gdr2", m_levelName);
+            std::replace_if(fileName.begin(), fileName.end(), [](char c) {
+                return c == '/' || c == '\\' || c == ':';
+            }, '_');
+
+            #ifdef GEODE_IS_IOS
+            // The iOS save picker only exports an empty placeholder file, so write straight
+            // into the save dir instead (visible in the Files app, and where Eclipse looks)
+            auto path = saveDir / fileName;
+            auto res = writeBinary(path, macro);
+            std::string error = res.isErr() ? res.unwrapErr() : "";
+            queueInMainThread([this, error, path, saveDir] {
+                if (!error.empty()) {
+                    FLAlertLayer::create("Export Failed", error, "OK")->show();
+                    return;
+                }
+
+                createQuickPopup("Macro Saved", fmt::format("Saved to <cy>{}</c>", utils::string::pathToString(path)), "OK", "Open Folder", [saveDir](FLAlertLayer*, bool openFolder) {
+                    if (openFolder)
+                        (void)file::openFolder(saveDir);
+                });
+                removeFromParentAndCleanup(true);
+            });
+            co_return;
+            #else
             FilePickOptions opts(
-                saveDir / fmt::format("{}.gdr2", m_levelName), {{
+                saveDir / fileName, {{
                 std::string("Macro File"),
                 std::unordered_set {std::string("gdr2")}
             }});
@@ -57,6 +83,7 @@ public:
                     removeFromParentAndCleanup(true);
                 });
             }
+            #endif
         };
 
         Build<ButtonSprite>::create("Export", "bigFont.fnt", "GJ_button_01.png")

@@ -15,7 +15,10 @@ target_include_directories(gd-sim PUBLIC include)
 
 target_compile_definitions(gd-sim PRIVATE -D_HAS_ITERATOR_DEBUGGING=0)
 
-add_executable(gd-sim-test ${SOURCES} test/test.cpp)
+# The standalone test runner is only used by desktop debug builds; it cannot run on iOS
+if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "iOS")
+    add_executable(gd-sim-test ${SOURCES} test/test.cpp)
 
-set_target_properties(gd-sim-test PROPERTIES INTERPROCEDURAL_OPTIMIZATION 0)
-target_include_directories(gd-sim-test PRIVATE include)
+    set_target_properties(gd-sim-test PROPERTIES INTERPROCEDURAL_OPTIMIZATION 0)
+    target_include_directories(gd-sim-test PRIVATE include)
+endif()

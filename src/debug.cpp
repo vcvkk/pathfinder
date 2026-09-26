@@ -10,9 +10,14 @@ using namespace geode::utils::file;
 #include <Geode/modify/EditorPauseLayer.hpp>
 #include <Geode/modify/EditLevelLayer.hpp>
 #include <gdr/gdr.hpp>
-#include "subprocess.hpp"
 
-#ifndef DEBUG_MODE
+// Debug builds run the standalone gd-sim-test binary; iOS can't spawn processes, so it simulates in-process
+#if defined(DEBUG_MODE) && !defined(GEODE_IS_IOS)
+#define PATHFINDER_EXTERNAL_SIM 1
+#include "subprocess.hpp"
+#endif
+
+#ifndef PATHFINDER_EXTERNAL_SIM
 #include <Level.hpp>
 #include <sstream>
 #endif
@@ -76,7 +81,7 @@ void runTestSim(std::string const& level, std::filesystem::path const& path) {
 
     std::string outbuf;
 
-    #if DEBUG_MODE
+    #ifdef PATHFINDER_EXTERNAL_SIM
     try {
         #if _WIN32
         auto dir = std::filesystem::path(__FILE__).parent_path().parent_path() / "build" / "gd-sim" / "Debug" / "gd-sim-test.exe";
